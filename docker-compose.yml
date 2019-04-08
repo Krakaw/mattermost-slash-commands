@@ -1,0 +1,7 @@
+version: "3"
+services:
+  bot:
+    ports:
+      - "$PORT:$PORT"
+    volumes:
+      - .:/app/source
