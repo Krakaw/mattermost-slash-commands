@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 
+const DEBUG = process.env.DEBUG;
 
 router.post('/', (req, res) => {
-    const DEBUG = process.env.DEBUG;
+
     if (DEBUG) {
         console.log(req.body);
     }
@@ -26,42 +27,42 @@ router.post('/', (req, res) => {
     }
     if (!requestedServer) {
         //This is just polling for the current size
-        return res.send(`The current drone build server size is \`${currentSize}\``);
+        return respond(res, `The current drone build server size is \`${currentSize}\``);
     }
 
     //Only the authorized users can execute this function
     if (AUTHORIZED_USERS.indexOf(user_name) === -1) {
-        return res.send("Unauthorized user");
+        return respond(res, "Unauthorized user");
     }
 
     //Mattermost sends a token, we expect a very specific one.
     if (!BUILD_KEY && token !== BUILD_KEY) {
-        return res.send("Unauthorized mattermost token");
+        return respond(res, "Unauthorized mattermost token");
     }
 
     //Make sure that the file we are editing exists
 
     if (!fs.existsSync(BUILD_OUTPUT_FILE)) {
-        return res.send("Invalid build output file path");
+        return respond(res, "Invalid build output file path");
     }
 
     const stats = fs.statSync(BUILD_OUTPUT_FILE);
     //Make sure that the file is empty
     if (stats.size > 0) {
-        return res.send(`The file must be empty before another modification can occur, please try again just now.`);
+        return respond(res, `The file must be empty before another modification can occur, please try again just now.`);
     }
 
     let timeSinceLastModification = (new Date()).getTime() - stats.mtimeMs;
     //Make sure we have not modified the file within the last X minutes
     if (timeSinceLastModification < TIME_BETWEEN_MODIFICATIONS) {
-        return res.send(`The file can only be modified again in ${Math.round((TIME_BETWEEN_MODIFICATIONS - timeSinceLastModification) / 1000 / 60)} minutes`)
+        return respond(res, `The file can only be modified again in ${Math.round((TIME_BETWEEN_MODIFICATIONS - timeSinceLastModification) / 1000 / 60)} minutes`)
     }
 
     const types = {
-        'slow':'c5.xlarge',
-        'fast':'c5.2xlarge',
-        'faster':'c5.4xlarge',
-        'fastest':'c5.9xlarge',
+        'slow': 'c5.xlarge',
+        'fast': 'c5.2xlarge',
+        'faster': 'c5.4xlarge',
+        'fastest': 'c5.9xlarge',
     };
 
     let serverDescription = checkServerSize(types, requestedServer);
@@ -71,14 +72,17 @@ router.post('/', (req, res) => {
     if (serverDescription) {
         fs.writeFileSync(BUILD_OUTPUT_FILE, requestedServer, {encoding: 'utf8', flag: 'w'});
         responseText = `Old Size: \`${currentSize}\`\nThe build server has been set to ${requestedServer} - ${types[requestedServer]}`;
-        res.send(responseText);
+        return respond(res, responseText);
     } else {
-        res.send(responseText);
+        return respond(res, responseText);
     }
 
 });
 
 function respond(res, message) {
+    if (DEBUG) {
+        console.log("Responding", message);
+    }
     return res.send(message);
 }
 
