@@ -83,7 +83,7 @@ function respond(res, message) {
     if (DEBUG) {
         console.log("Responding", message);
     }
-    return res.send(message);
+    return res.send(message.trim());
 }
 
 function checkServerSize(types, requestedType) {
