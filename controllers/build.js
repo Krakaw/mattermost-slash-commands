@@ -21,10 +21,7 @@ const BUILD_CURRENT_FILE = process.env.BUILD_CURRENT_FILE;
 
 router.post('/', (req, res) => {
 
-    if (DEBUG) {
-        console.log(req.body);
-        console.log("Authorized Users:", AUTHORIZED_USERS);
-    }
+
 
     const {body: {token = null, user_name = null, text = ""}} = req;
 
@@ -32,7 +29,14 @@ router.post('/', (req, res) => {
     let currentName = getCurrentServerName();
     let currentType = getTypeFromName(currentName);
     let currentDescription = getCompleteDescription(currentType);
-
+    if (DEBUG) {
+        console.log(req.body);
+        console.log("Authorized Users:", AUTHORIZED_USERS);
+        console.log("requestedServerType", requestedServerType);
+        console.log("currentName", currentName);
+        console.log("currentType", currentType);
+        console.log("currentDescription", currentDescription);
+    }
     //This is just polling for the current size
     if (!requestedServerType) {
         return respond(res, `Current Drone is: \`${currentDescription}\``);
@@ -151,7 +155,7 @@ function prices(type) {
         [TYPE_FAST]: 0.34,
         [TYPE_FASTER]: 0.68,
         [TYPE_FASTEST]: 1.53,
-    }
+    };
 
     if (type) {
         return PRICES[type];
