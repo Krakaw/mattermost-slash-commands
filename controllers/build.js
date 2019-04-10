@@ -97,16 +97,16 @@ function getCurrentServerName() {
     let currentSize = "Unknown";
     if (fs.existsSync(BUILD_CURRENT_FILE)) {
         currentSize = fs.readFileSync(BUILD_CURRENT_FILE, 'utf8').trim();
-        currentSize = currentSize.split(" ")[4];
+        currentSize = currentSize.split(" ")[4].trim();
     }
     return currentSize;
 }
 
 function getTypeFromName(name) {
     name = name.trim();
-    let TYPES = types();
-    for (let type in TYPES) {
-        let typeName = TYPES[type];
+    let NAMES = names();
+    for (let type in NAMES) {
+        let typeName = NAMES[type];
         if (typeName === name) {
             return type;
         }
@@ -135,8 +135,22 @@ function types(type) {
     return TYPES;
 }
 
-function descriptions(type) {
+function names(type) {
     const NAMES = {
+        [TYPE_SLOW]: `c5.xlarge`,
+        [TYPE_FAST]: `c5.2xlarge`,
+        [TYPE_FASTER]: `c5.4xlarge`,
+        [TYPE_FASTEST]: `c5.9xlarge`,
+    };
+
+    if (type) {
+        return NAMES[type];
+    }
+    return NAMES;
+}
+
+function descriptions(type) {
+    const DESCRIPTIONS = {
         [TYPE_SLOW]: `${TYPE_SLOW} - c5.xlarge`,
         [TYPE_FAST]: `${TYPE_FAST} - c5.2xlarge`,
         [TYPE_FASTER]: `${TYPE_FASTER} - c5.4xlarge`,
@@ -144,9 +158,9 @@ function descriptions(type) {
     };
 
     if (type) {
-        return NAMES[type];
+        return DESCRIPTIONS[type];
     }
-    return NAMES;
+    return DESCRIPTIONS;
 }
 
 function prices(type) {
