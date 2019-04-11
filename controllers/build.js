@@ -39,13 +39,17 @@ router.post('/', (req, res) => {
         return respond(res, `Current Drone is: \`${currentDescription}\``);
     }
 
+    if (requestedServerType === currentType) {
+        return respond(res, `The server is already set to \`${currentDescription}\``);
+    }
+
     const queryIsValid = validateUserCanChange(res, user_name, token);
     if (queryIsValid === true) {
         let responseText = "";
         if (types(requestedServerType)) {
             //It is a valid query, change the server size
             setServerSize(requestedServerType);
-            responseText = `Old Size: \`${currentName}\`\n${getCompleteDescription(requestedServerType)}`;
+            responseText = `Old Size: \`${currentName}\`\nNew Size: ${getCompleteDescription(requestedServerType)}`;
             return respond(res, responseText, channel_id);
         } else {
             responseText = `Current Size: \`${currentName}\`\nInvalid input \`${requestedServerType}\`: /build [${Object.keys(types).join("|")}]`;
