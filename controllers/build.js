@@ -20,9 +20,6 @@ const BUILD_OUTPUT_FILE = process.env.BUILD_OUTPUT_FILE;
 const BUILD_CURRENT_FILE = process.env.BUILD_CURRENT_FILE;
 
 router.post('/', (req, res) => {
-
-
-
     const {body: {token = null, user_name = null, text = "", channel_id}} = req;
 
     let requestedServerType = text.trim().toLowerCase();
@@ -48,7 +45,7 @@ router.post('/', (req, res) => {
         if (types(requestedServerType)) {
             //It is a valid query, change the server size
             setServerSize(requestedServerType);
-            responseText =  `Old Size: \`${currentName}\`\n${getCompleteDescription(requestedServerType)}`;
+            responseText = `Old Size: \`${currentName}\`\n${getCompleteDescription(requestedServerType)}`;
             return respond(res, responseText, channel_id);
         } else {
             responseText = `Current Size: \`${currentName}\`\nInvalid input \`${requestedServerType}\`: /build [${Object.keys(types).join("|")}]`;
@@ -187,15 +184,9 @@ function respond(res, text, channel_id) {
     let response = {text};
     if (channel_id) {
         response.response_type = "in_channel";
-        response.channel_id= channel_id;
+        response.channel_id = channel_id;
     }
     return res.json(response);
 }
-
-function checkServerSize(requestedType) {
-    requestedType = requestedType.toLowerCase();
-    return types(requestedType);
-}
-
 
 module.exports = router;
