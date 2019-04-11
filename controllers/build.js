@@ -23,7 +23,7 @@ router.post('/', (req, res) => {
 
 
 
-    const {body: {token = null, user_name = null, text = ""}} = req;
+    const {body: {token = null, user_name = null, text = "", channel_id}} = req;
 
     let requestedServerType = text.trim().toLowerCase();
     let currentName = getCurrentServerName();
@@ -49,10 +49,12 @@ router.post('/', (req, res) => {
             //It is a valid query, change the server size
             setServerSize(requestedServerType);
             responseText =  `Old Size: \`${currentName}\`\n${getCompleteDescription(requestedServerType)}`;
+            return respond(res, responseText, channel_id);
         } else {
             responseText = `Current Size: \`${currentName}\`\nInvalid input \`${requestedServerType}\`: /build [${Object.keys(types).join("|")}]`;
+            return respond(res, responseText);
         }
-        return respond(res, responseText);
+
     } else {
         return queryIsValid;
     }
@@ -177,11 +179,17 @@ function prices(type) {
     return PRICES;
 }
 
-function respond(res, message) {
+function respond(res, text, channel_id) {
+    text = text.trim();
     if (DEBUG) {
-        console.log("Responding", message);
+        console.log("Responding", text, channel_id);
     }
-    return res.send(message.trim());
+    let response = {text};
+    if (channel_id) {
+        response.response_type = "in_channel";
+        response.channel_id= channel_id;
+    }
+    return res.json(response);
 }
 
 function checkServerSize(requestedType) {
