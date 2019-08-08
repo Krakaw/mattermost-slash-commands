@@ -11,7 +11,7 @@ router.post("/", async function(req, res) {
     const messageText = (text || '').trim();
 
     if (!checkToken(req, MM_TOKEN)) {
-        // return res.send("Not authorized");
+        return res.send("Not authorized");
     }
     let responseText = '';
     let forcePrivateResponse = true;
