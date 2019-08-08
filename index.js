@@ -9,6 +9,7 @@ const port = process.env.PORT || 3000;
 const build = require("./controllers/build");
 const time = require("./controllers/time");
 const chat = require("./controllers/chat");
+const emergency = require("./controllers/emergency");
 
 app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
@@ -16,6 +17,7 @@ app.use(bodyParser.urlencoded({extended: true})); // for parsing application/x-w
 app.use("/build", build);
 app.use("/time", time);
 app.use("/chat", chat);
+app.use("/emergency", emergency);
 
 app.get("/", (req, res) => {
     return res.send("/build or /time");
