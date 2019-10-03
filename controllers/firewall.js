@@ -9,7 +9,8 @@ const ACL_ID = process.env.ACL_ID;
 const AUTHORIZED_USERS = (process.env.FIREWALL_AUTHORIZED_USERS || "").split(",");
 const AWS_ACCESS_KEY = process.env.AWS_ACCESS_KEY;
 const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
-const FIREWALL_MAX_RULE_COUNT = process.env.FIREWALL_MAX_RULE_COUNT || 1000;
+const FIREWALL_MIN_RULE_NUMBER = process.env.FIREWALL_MIN_RULE_NUMBER || 1;
+const FIREWALL_MAX_RULE_NUMBER = process.env.FIREWALL_MAX_RULE_NUMBER || 1000;
 
 const config = {
     region: EC2_REGION
@@ -68,9 +69,8 @@ router.post("/", async function (req, res) {
 });
 
 async function addRule(ip, RuleNumber) {
-    if (RuleNumber >= FIREWALL_MAX_RULE_COUNT) {
-        throw `Invalid RuleNumber: ${RuleNumber} (Cannot be < 1 or > ${FIREWALL_MAX_RULE_COUNT - 1})`;
-    }
+    validRuleNumber(RuleNumber);
+
     const CidrBlock = `${ip}/32`;
     const params = {
         DryRun: false,
@@ -93,9 +93,7 @@ async function addRule(ip, RuleNumber) {
 }
 
 async function deleteRule(RuleNumber) {
-    if (!RuleNumber || RuleNumber >= FIREWALL_MAX_RULE_COUNT) {
-        throw `Invalid RuleNumber: ${RuleNumber} (Cannot be < 1 or > ${FIREWALL_MAX_RULE_COUNT - 1})`;
-    }
+    validRuleNumber(RuleNumber);
 
     const params = {
         DryRun: false,
@@ -136,8 +134,18 @@ function getRuleNumberFromIp(ip, ingressAcls) {
 }
 
 function nextRuleNumber(ingressAcls) {
-    const lastRuleNumber = (ingressAcls.filter(acl => acl.RuleNumber < FIREWALL_MAX_RULE_COUNT).slice(-1).pop() || {}).RuleNumber || 0;
-    return lastRuleNumber + 1;
+    const lastRuleNumber = (ingressAcls.find(acl => acl.RuleNumber >= FIREWALL_MIN_RULE_NUMBER && acl.RuleNumber <= FIREWALL_MAX_RULE_NUMBER) || {}).RuleNumber;
+    if (lastRuleNumber) {
+        return lastRuleNumber + 1;
+    }
+    return FIREWALL_MIN_RULE_NUMBER;
+}
+
+function validRuleNumber(RuleNumber) {
+    if (RuleNumber >= FIREWALL_MIN_RULE_NUMBER && RuleNumber <= FIREWALL_MAX_RULE_NUMBER) {
+        return true;
+    }
+    throw `Invalid RuleNumber: ${RuleNumber} - Must be between ${FIREWALL_MIN_RULE_NUMBER} and ${FIREWALL_MAX_RULE_NUMBER}`;
 }
 
 function formatAcls(ingressAcls) {
