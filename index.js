@@ -10,6 +10,7 @@ const build = require("./controllers/build");
 const time = require("./controllers/time");
 const chat = require("./controllers/chat");
 const emergency = require("./controllers/emergency");
+const firewall = require("./controllers/firewall");
 
 app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
@@ -18,6 +19,7 @@ app.use("/build", build);
 app.use("/time", time);
 app.use("/chat", chat);
 app.use("/emergency", emergency);
+app.use("/firewall", firewall);
 
 app.get("/", (req, res) => {
     return res.send("/build or /time");
