@@ -4,8 +4,8 @@ const router = express.Router();
 const {checkToken, respond} = require("../utils/mattermost");
 
 const MM_TOKEN = process.env.FIREWALL_DUTY_MM_KEY;
-const EC2_REGION = process.env.EC2_REGION || 'eu-west-1';
-const ACL_ID = process.env.ACL_ID || "acl-0453e3d4e08ba3cac";
+const EC2_REGION = process.env.EC2_REGION;
+const ACL_ID = process.env.ACL_ID;
 const AUTHORIZED_USERS = (process.env.FIREWALL_AUTHORIZED_USERS || "").split(",");
 const AWS_ACCESS_KEY = process.env.AWS_ACCESS_KEY;
 const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
