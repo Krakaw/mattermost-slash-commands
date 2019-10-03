@@ -38,6 +38,10 @@ router.post("/", async function (req, res) {
         let forcePrivateResponse = true;
 
         if (messageText !== "") {
+            if (AUTHORIZED_USERS.indexOf(user_name) === -1) {
+                return respond(req, res, "Unauthorized user");
+            }
+
             const [ip, d = ""] = messageText.split(" ");
             if (d.trim()) {
                 const ruleNumberFromIp = getRuleNumberFromIp(ip, ingressAcls);
