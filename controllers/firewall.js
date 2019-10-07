@@ -11,6 +11,10 @@ const AWS_ACCESS_KEY = process.env.AWS_ACCESS_KEY;
 const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
 const FIREWALL_MIN_RULE_NUMBER = process.env.FIREWALL_MIN_RULE_NUMBER || 1;
 const FIREWALL_MAX_RULE_NUMBER = process.env.FIREWALL_MAX_RULE_NUMBER || 1000;
+const DEBUG = process.env.DEBUG;
+
+
+
 
 const config = {
     region: EC2_REGION
@@ -38,6 +42,10 @@ router.post("/", async function (req, res) {
         let responseText = '';
         let forcePrivateResponse = true;
 
+        if (DEBUG) {
+            console.log("FIREWALL: Incoming message: ", messageText, "from", user_name);
+        }
+
         if (messageText !== "") {
             if (AUTHORIZED_USERS.indexOf(user_name) === -1) {
                 return respond(req, res, "Unauthorized user");
@@ -49,7 +57,8 @@ router.post("/", async function (req, res) {
                 await deleteRule(ruleNumberFromIp);
                 responseText = `${ip} has been removed from firewall by ${user_name}!\n`;
             } else {
-                await addRule(ip, nextRuleNumber(ingressAcls));
+                const ruleNumber = nextRuleNumber(ingressAcls);
+                await addRule(ip, ruleNumber);
                 responseText = `${ip} has been blocked by ${user_name}!\n`;
             }
 
@@ -67,6 +76,7 @@ router.post("/", async function (req, res) {
 
 
 });
+
 
 async function addRule(ip, RuleNumber) {
     validRuleNumber(RuleNumber);
@@ -130,11 +140,21 @@ async function describeNetworkAcls() {
 
 function getRuleNumberFromIp(ip, ingressAcls) {
     const CidrBlock = `${ip}/32`;
-    return (ingressAcls.find(acl => acl.CidrBlock === CidrBlock) || {}).RuleNumber || 0;
+    const ruleNumber = (ingressAcls.find(acl => acl.CidrBlock === CidrBlock) || {}).RuleNumber;
+    if (ruleNumber) {
+        return ruleNumber;
+    }
+    throw `${ip} not found`;
 }
 
 function nextRuleNumber(ingressAcls) {
-    const lastRuleNumber = (ingressAcls.find(acl => acl.RuleNumber >= FIREWALL_MIN_RULE_NUMBER && acl.RuleNumber <= FIREWALL_MAX_RULE_NUMBER) || {}).RuleNumber;
+    const allowedAcls = ingressAcls.filter(acl => acl.RuleNumber >= FIREWALL_MIN_RULE_NUMBER && acl.RuleNumber <= FIREWALL_MAX_RULE_NUMBER);
+    if (allowedAcls.length === 0) {
+        return FIREWALL_MIN_RULE_NUMBER;
+    }
+    const lastRuleNumber = (allowedAcls.reduce((prev, next) => {
+        return (prev.RuleNumber > next.RuleNumber) ? prev : next
+    }) || {}).RuleNumber;
     if (lastRuleNumber) {
         return lastRuleNumber + 1;
     }
