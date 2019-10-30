@@ -11,6 +11,7 @@ const AWS_ACCESS_KEY = process.env.AWS_ACCESS_KEY;
 const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
 const RDS_WRITER_IDENTIFIER = process.env.RDS_WRITER_IDENTIFIER || '-rw-';
 const RDS_READER_IDENTIFIER = process.env.RDS_READER_IDENTIFIER || '-ro-';
+const RDS_MAX_READERS = process.env.RDS_MAX_READERS || 4;
 
 const config = {
     region: EC2_REGION
@@ -33,22 +34,36 @@ const postHandler = async (req, res) => {
         return returnEarly;
     }
 
+    try {
+        const dbInstances = await describeDBInstances();
+        const dbs = getDbInstances(dbInstances);
 
+        let responseText = '';
+        let forcePrivateResponse = true;
+        if (messageText !== "") {
+            if (AUTHORIZED_USERS.indexOf(user_name) === -1) {
+                return respond(req, res, "Unauthorized user");
+            }
+            if (messageText === "up") {
+                let result = await appendROInstance(dbs);
+                responseText += `I have started a new instance`;
+            } else if (messageText === "down") {
+                let result = await removeLastROInstance(dbs);
+                responseText += `I have removed the latest instance`;
+            } else {
+                responseText = ``
+            }
+            forcePrivateResponse = false;
+        } else {
+            responseText = `To change the read only instances /rds up|down`;
+        }
 
-    const dbInstances = await describeDBInstances();
-    const dbs = getDbInstances(dbInstances);
+        responseText += `\n${formatDbs(dbs)}`;
 
-    let responseText = '';
-    if (messageText !== "") {
-        let masterInstace = getMaster(dbs);
-        await addROInstance(messageText, masterInstace)
-    } else {
-
+        return respond(req, res, responseText, forcePrivateResponse);
+    } catch (e) {
+        return res.send(e);
     }
-    responseText += formatDbs(dbs);
-    let forcePrivateResponse = true;
-    return respond(req, res, responseText, forcePrivateResponse);
-
 
 
 };
@@ -60,6 +75,10 @@ const invalidAuth = (req, res) => {
 
     if (!checkToken(req, MM_TOKEN)) {
         return res.send("Not authorized");
+    }
+
+    if (messageText) {
+
     }
 
     return false;
@@ -88,7 +107,11 @@ async function appendROInstance(dbs) {
     let readOnlyInstance = readers[0];
     let DBClusterIdentifierBase = getBaseIdentifier(readOnlyInstance);
     let nextInstanceNumber = getNextInstanceNumber(readers);
-    let newDBInstanceIdentifier =  `${DBClusterIdentifierBase}-${nextInstanceNumber}`
+    if (nextInstanceNumber >= RDS_MAX_READERS) {
+        throw `You have reached your max readers of ${RDS_MAX_READERS}`;
+    }
+
+    let newDBInstanceIdentifier = `${DBClusterIdentifierBase}-${nextInstanceNumber}`
     let result = await addROInstance(newDBInstanceIdentifier, readOnlyInstance);
     return result;
 }
@@ -155,7 +178,7 @@ async function removeLastROInstance(dbs) {
         throw "No instances to remove, aborting";
     }
     let instanceNumberToRemove = nextInstanceNumber - 1;
-    let DBInstanceIdentifierToRemove =  `${DBClusterIdentifierBase}-${instanceNumberToRemove}`
+    let DBInstanceIdentifierToRemove = `${DBClusterIdentifierBase}-${instanceNumberToRemove}`
     let result = await removeROInstance(DBInstanceIdentifierToRemove);
     return result;
 }
@@ -198,7 +221,7 @@ function getReaders(dbs) {
 function getBaseIdentifier(db) {
     let identifier = db.DBInstanceIdentifier;
     let parts = identifier.split("-");
-    if (isNaN(parts[parts.length -1])) {
+    if (isNaN(parts[parts.length - 1])) {
         return identifier
     }
     return parts.slice(0, -1).join("-");
@@ -210,7 +233,7 @@ function getNextInstanceNumber(dbs) {
         let lastPart = db.DBInstanceIdentifier.split('-').pop();
         if (isNaN(lastPart)) {
             nextInstanceNumber = 1;
-        } else if(lastPart >= nextInstanceNumber) {
+        } else if (lastPart >= nextInstanceNumber) {
             nextInstanceNumber = +lastPart + 1;
         }
     });

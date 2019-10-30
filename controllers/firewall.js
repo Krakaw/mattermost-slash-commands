@@ -13,9 +13,6 @@ const FIREWALL_MIN_RULE_NUMBER = process.env.FIREWALL_MIN_RULE_NUMBER || 1;
 const FIREWALL_MAX_RULE_NUMBER = process.env.FIREWALL_MAX_RULE_NUMBER || 1000;
 const DEBUG = process.env.DEBUG;
 
-
-
-
 const config = {
     region: EC2_REGION
 };
