@@ -244,13 +244,4 @@ function getDbInstances(rawData) {
     return rawData.DBInstances.filter(db => db.DBClusterIdentifier === RDS_CLUSTER_FILTER) || [];
 }
 
-describeDBInstances().then(async r => {
-    let dbs = getDbInstances(r);
-    // console.log(formatDbs(dbs));
-    // let result = await appendROInstance(dbs);
-    // let result = await removeLastROInstance(dbs);
-    // console.log(result);
-
-})
-
 module.exports = router;
