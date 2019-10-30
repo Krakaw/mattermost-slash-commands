@@ -9,8 +9,8 @@ const RDS_CLUSTER_FILTER = process.env.RDS_CLUSTER_FILTER || "bigneon-dev-rds-rd
 const AUTHORIZED_USERS = (process.env.RDS_AUTHORIZED_USERS || "").split(",");
 const AWS_ACCESS_KEY = process.env.AWS_ACCESS_KEY;
 const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
-const RDS_WRITER_IDENTIFIER = process.env.RDS_WRITER_IDENTIFIER;
-const RDS_READER_IDENTIFIER = process.env.RDS_READER_IDENTIFIER;
+const RDS_WRITER_IDENTIFIER = process.env.RDS_WRITER_IDENTIFIER || '-rw-';
+const RDS_READER_IDENTIFIER = process.env.RDS_READER_IDENTIFIER || '-ro-';
 
 const config = {
     region: EC2_REGION
@@ -40,11 +40,13 @@ const postHandler = async (req, res) => {
 
     let responseText = '';
     if (messageText !== "") {
-
+        let masterInstace = getMaster(dbs);
+        await addROInstance(messageText, masterInstace)
     } else {
 
     }
     responseText += formatDbs(dbs);
+    let forcePrivateResponse = true;
     return respond(req, res, responseText, forcePrivateResponse);
 
 
@@ -76,6 +78,21 @@ async function describeDBInstances() {
     });
 }
 
+/**
+ * Wrapper function to add a new db instance
+ * @param dbs
+ * @returns {Promise<unknown>}
+ */
+async function appendROInstance(dbs) {
+    let readers = getReaders(dbs);
+    let readOnlyInstance = readers[0];
+    let DBClusterIdentifierBase = getBaseIdentifier(readOnlyInstance);
+    let nextInstanceNumber = getNextInstanceNumber(readers);
+    let newDBInstanceIdentifier =  `${DBClusterIdentifierBase}-${nextInstanceNumber}`
+    let result = await addROInstance(newDBInstanceIdentifier, readOnlyInstance);
+    return result;
+}
+
 async function addROInstance(newDBInstanceIdentifier, instance) {
     const {
         DBClusterIdentifier,
@@ -83,15 +100,75 @@ async function addROInstance(newDBInstanceIdentifier, instance) {
         DBInstanceClass
     } = instance;
 
+    /**
+     * @TODO Move this to .env
+     * @type {*[]}
+     */
+    const Tags = [
+        {
+            Key: "Name",
+            Value: newDBInstanceIdentifier
+        },
+        {
+            Key: "ProvisionedBy",
+            Value: "ChatOps"
+        },
+        {
+            Key: "Stack",
+            Value: "bigneon"
+        },
+        {
+            Key: "Environment",
+            Value: "production"
+        }
+    ];
     const params = {
         DBInstanceIdentifier: newDBInstanceIdentifier,
         DBClusterIdentifier,
         Engine,
-        DBInstanceClass
+        DBInstanceClass,
+        CopyTagsToSnapshot: true,
+        PromotionTier: 2,
+        EnablePerformanceInsights: false,
+        Tags
+
     };
 
     return new Promise((resolve, reject) => {
         rds.createDBInstance(params, function (err, data) {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(data);
+            }
+        });
+    });
+
+}
+
+async function removeLastROInstance(dbs) {
+    let readers = getReaders(dbs);
+    let readOnlyInstance = readers[0];
+    let DBClusterIdentifierBase = getBaseIdentifier(readOnlyInstance);
+    let nextInstanceNumber = getNextInstanceNumber(readers);
+    if (nextInstanceNumber <= 1) {
+        throw "No instances to remove, aborting";
+    }
+    let instanceNumberToRemove = nextInstanceNumber - 1;
+    let DBInstanceIdentifierToRemove =  `${DBClusterIdentifierBase}-${instanceNumberToRemove}`
+    let result = await removeROInstance(DBInstanceIdentifierToRemove);
+    return result;
+}
+
+async function removeROInstance(DBInstanceIdentifier) {
+    const params = {
+        DBInstanceIdentifier,
+        SkipFinalSnapshot: true,
+        DeleteAutomatedBackups: true
+    };
+
+    return new Promise((resolve, reject) => {
+        rds.deleteDBInstance(params, function (err, data) {
             if (err) {
                 reject(err);
             } else {
@@ -134,162 +211,23 @@ function getNextInstanceNumber(dbs) {
         if (isNaN(lastPart)) {
             nextInstanceNumber = 1;
         } else if(lastPart >= nextInstanceNumber) {
-            nextInstanceNumber = lastPart +1;
+            nextInstanceNumber = +lastPart + 1;
         }
-    })
+    });
+    return nextInstanceNumber;
 }
 
 function getDbInstances(rawData) {
     return rawData.DBInstances.filter(db => db.DBClusterIdentifier === RDS_CLUSTER_FILTER) || [];
 }
 
+describeDBInstances().then(async r => {
+    let dbs = getDbInstances(r);
+    // console.log(formatDbs(dbs));
+    // let result = await appendROInstance(dbs);
+    // let result = await removeLastROInstance(dbs);
+    // console.log(result);
 
-postHandler((e, r) => {
-    // console.log(JSON.stringify(r));
-});
-
+})
 
 module.exports = router;
-
-/*
-router.post("/", async function (req, res) {
-    const {body: {user_name = null, text = ""}} = req;
-
-    const messageText = (text || '').trim();
-
-    if (!checkToken(req, MM_TOKEN)) {
-        return res.send("Not authorized");
-    }
-
-    try {
-        let ingressAcls = getIngressEntries(await describeNetworkAcls());
-        let responseText = '';
-        let forcePrivateResponse = true;
-
-        if (messageText !== "") {
-            if (AUTHORIZED_USERS.indexOf(user_name) === -1) {
-                return respond(req, res, "Unauthorized user");
-            }
-
-            const [ip, d = ""] = messageText.split(" ");
-            if (d.trim()) {
-                const ruleNumberFromIp = getRuleNumberFromIp(ip, ingressAcls);
-                await deleteRule(ruleNumberFromIp);
-                responseText = `${ip} has been removed from firewall by ${user_name}!\n`;
-            } else {
-                await addRule(ip, nextRuleNumber(ingressAcls));
-                responseText = `${ip} has been blocked by ${user_name}!\n`;
-            }
-
-            ingressAcls = getIngressEntries(await describeNetworkAcls());
-            forcePrivateResponse = false;
-        } else {
-            responseText = `To update the firewall /firewall IP.AD.DR.ES [d]\n`;
-        }
-
-        responseText += formatAcls(ingressAcls);
-        return respond(req, res, responseText, forcePrivateResponse);
-    }catch(e) {
-        return res.send(e);
-    }
-
-
-});
-
-async function addRule(ip, RuleNumber) {
-    validRuleNumber(RuleNumber);
-
-    const CidrBlock = `${ip}/32`;
-    const params = {
-        DryRun: false,
-        Egress: false,
-        Protocol: '-1',
-        RuleAction: "deny",
-        NetworkAclId: ACL_ID,
-        RuleNumber,
-        CidrBlock
-    };
-    return new Promise((resolve, reject) => {
-        ec2.createNetworkAclEntry(params, ((err, data) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(data);
-            }
-        }));
-    });
-}
-
-async function deleteRule(RuleNumber) {
-    validRuleNumber(RuleNumber);
-
-    const params = {
-        DryRun: false,
-        Egress: false,
-        NetworkAclId: ACL_ID,
-        RuleNumber
-    };
-    return new Promise((resolve, reject) => {
-        ec2.deleteNetworkAclEntry(params, ((err, data) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(data);
-            }
-        }));
-    });
-}
-
-async function describeNetworkAcls() {
-    const params = {
-        DryRun: false,
-        Filters: [{Name: "association.network-acl-id", Values: [ACL_ID]}]
-    };
-    return new Promise((resolve, reject) => {
-        ec2.describeNetworkAcls(params, function (err, data) {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(data);
-            }
-        });
-    });
-}
-
-function getRuleNumberFromIp(ip, ingressAcls) {
-    const CidrBlock = `${ip}/32`;
-    return (ingressAcls.find(acl => acl.CidrBlock === CidrBlock) || {}).RuleNumber || 0;
-}
-
-function nextRuleNumber(ingressAcls) {
-    const lastRuleNumber = (ingressAcls.find(acl => acl.RuleNumber >= FIREWALL_MIN_RULE_NUMBER && acl.RuleNumber <= FIREWALL_MAX_RULE_NUMBER) || {}).RuleNumber;
-    if (lastRuleNumber) {
-        return lastRuleNumber + 1;
-    }
-    return FIREWALL_MIN_RULE_NUMBER;
-}
-
-function validRuleNumber(RuleNumber) {
-    if (RuleNumber >= FIREWALL_MIN_RULE_NUMBER && RuleNumber <= FIREWALL_MAX_RULE_NUMBER) {
-        return true;
-    }
-    throw `Invalid RuleNumber: ${RuleNumber} - Must be between ${FIREWALL_MIN_RULE_NUMBER} and ${FIREWALL_MAX_RULE_NUMBER}`;
-}
-
-function formatAcls(ingressAcls) {
-    let text = '';
-    ingressAcls.forEach(acl => {
-        text += `${acl.CidrBlock} | ${acl.RuleAction} | ${acl.RuleNumber}\n`;
-    });
-    return text;
-}
-
-function getIngressEntries(acls) {
-    let entries = [];
-    acls.NetworkAcls.forEach(acl => {
-        entries = entries.concat(acl.Entries.filter(acl => acl.Egress === false));
-    });
-    return entries;
-}
-
- */
