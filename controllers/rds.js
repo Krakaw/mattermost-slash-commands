@@ -24,6 +24,9 @@ AWS.config.update(config);
 
 const rds = new AWS.RDS({apiVersion: '2016-11-15'});
 
+router.post("/", async function(req,res) {
+    return await postHandler(req,res);
+});
 const postHandler = async (req, res) => {
     const {body: {user_name = null, text = ""}} = req;
 
@@ -44,11 +47,12 @@ const postHandler = async (req, res) => {
             if (AUTHORIZED_USERS.indexOf(user_name) === -1) {
                 return respond(req, res, "Unauthorized user");
             }
+            let result;
             if (messageText === "up") {
-                let result = await appendROInstance(dbs);
+                result = await appendROInstance(dbs);
                 responseText += `I have started a new instance`;
             } else if (messageText === "down") {
-                let result = await removeLastROInstance(dbs);
+                result = await removeLastROInstance(dbs);
                 responseText += `I have removed the latest instance`;
             } else {
                 responseText = ``
@@ -62,11 +66,14 @@ const postHandler = async (req, res) => {
 
         return respond(req, res, responseText, forcePrivateResponse);
     } catch (e) {
+        console.error(e);
         return res.send(e);
     }
 
 
 };
+
+
 
 const invalidAuth = (req, res) => {
     const {body: {user_name = null, text = ""}} = req;
@@ -75,10 +82,6 @@ const invalidAuth = (req, res) => {
 
     if (!checkToken(req, MM_TOKEN)) {
         return res.send("Not authorized");
-    }
-
-    if (messageText) {
-
     }
 
     return false;
