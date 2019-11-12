@@ -24,8 +24,8 @@ AWS.config.update(config);
 
 const rds = new AWS.RDS({apiVersion: '2016-11-15'});
 
-router.post("/", async function(req,res) {
-    return await postHandler(req,res);
+router.post("/", async function (req, res) {
+    return await postHandler(req, res);
 });
 const postHandler = async (req, res) => {
     const {body: {user_name = null, text = ""}} = req;
@@ -38,8 +38,7 @@ const postHandler = async (req, res) => {
     }
 
     try {
-        const dbInstances = await describeDBInstances();
-        const dbs = getDbInstances(dbInstances);
+        let dbs = await getDbs();
 
         let responseText = '';
         let forcePrivateResponse = true;
@@ -51,9 +50,11 @@ const postHandler = async (req, res) => {
             if (messageText === "up") {
                 result = await appendROInstance(dbs);
                 responseText += `I have started a new instance`;
+                dbs = await getDbs();
             } else if (messageText === "down") {
                 result = await removeLastROInstance(dbs);
                 responseText += `I have removed the latest instance`;
+                dbs = await getDbs();
             } else {
                 responseText = ``
             }
@@ -69,11 +70,13 @@ const postHandler = async (req, res) => {
         console.error(e);
         return res.send(e);
     }
-
-
 };
 
-
+const getDbs = async () => {
+    const dbInstances = await describeDBInstances();
+    const dbs = getDbInstances(dbInstances);
+    return dbs;
+};
 
 const invalidAuth = (req, res) => {
     const {body: {user_name = null, text = ""}} = req;
@@ -85,8 +88,7 @@ const invalidAuth = (req, res) => {
     }
 
     return false;
-}
-
+};
 
 async function describeDBInstances() {
     return new Promise((resolve, reject) => {
