@@ -24,8 +24,12 @@ router.post('/', async function(req,res) {
         return res.sendStatus(401);
     }
     const mm = new Mattermost(WEBHOOK_MM_API_URL, WEBHOOK_MM_TOKEN);
-
-    const message = processWebhookMessage(req.body.body, req.body.replacements);
+    const title = processWebhookMessage(req.body.title, req.body.replacements);
+    const body = processWebhookMessage(req.body.body, req.body.replacements);
+    let message = body;
+    if (title) {
+        message = `${title}\n${message}`;
+    }
     if (req.body.noPost) {
         console.log(message)
     } else {
