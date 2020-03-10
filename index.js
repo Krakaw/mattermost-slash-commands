@@ -14,6 +14,7 @@ const emergency = require("./controllers/emergency");
 const firewall = require("./controllers/firewall");
 const rds = require("./controllers/rds");
 const webhook = require("./controllers/webhook");
+const corona = require("./controllers/corona");
 
 app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
@@ -31,7 +32,7 @@ app.use("/emergency", emergency);
 app.use("/firewall", firewall);
 app.use("/rds", rds);
 app.use("/webhook", webhook);
-
+app.use("/corona", corona)
 app.get("/", (req, res) => {
     return res.send("You know what you should do");
 });
