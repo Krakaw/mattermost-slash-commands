@@ -15,7 +15,7 @@ router.post('/', async (req, res) => {
         const apiResult = await axios.get('https://wuhan-coronavirus-api.laeyoung.endpoint.ainize.ai/jhu-edu/latest');
         const {data} = apiResult;
         cache.data = data;
-        cache.expires = now + (15 * 60 * 1000);
+        cache.expires = now.getTime() + (15 * 60 * 1000);
     }
 
     const {data} = cache;
