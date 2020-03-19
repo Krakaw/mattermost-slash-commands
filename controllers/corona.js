@@ -9,7 +9,7 @@ const cache = {
     data: false,
 };
 
-const countries = ['US', 'USA', 'South Africa', 'Canada'];
+const countries = ['US', 'USA', 'South Africa', 'Canada', 'Serbia'];
 const worldometers = async () => {
 
     let apiData;
@@ -20,10 +20,11 @@ const worldometers = async () => {
     }
     const results = {},
         $ = cheerio.load(apiData.data),
-        rows = $("table#main_table_countries tbody tr");
+        rows = $("table#main_table_countries_today tbody tr");
     rows.each((i, elem) => {
         const row = [];
         $(elem).children("td").each((i, elem) => {
+            console.log($(elem).text())
             row.push($(elem).text().trim().replace(/,/g, ""))
         });
         if (countries.indexOf(row[0]) > -1) {
