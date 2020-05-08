@@ -1,14 +1,16 @@
 const axios = require("axios");
-
+require('dotenv').config()
 class Pagerduty {
     constructor(inputs) {
         const options = Object.assign({
             serviceKey: process.env.PAGERDUTY_USER_API_KEY,
-            serviceId: process.env.PAGERDUTY_TRIGGER_SERVICE_ID
+            serviceId: process.env.PAGERDUTY_TRIGGER_SERVICE_ID,
+            serviceEmail: process.env.PAGERDUTY_FROM_EMAIL
         }, inputs || {});
 
         this.serviceKey = options.serviceKey;
         this.serviceId = options.serviceId;
+        this.serviceEmail = options.serviceEmail;
     }
 
     trigger(title, description) {
@@ -61,7 +63,7 @@ class Pagerduty {
             "Accept": "application/vnd.pagerduty+json;version=2",
             "Content-Type": "application/json",
             "Authorization": `Token token=${this.serviceKey}`,
-            // "From": "keymaster@bigneon.com"
+            "From": this.serviceEmail
         };
         return axios.post(`https://api.pagerduty.com/${url}` ,postData, {headers});
     }
@@ -79,4 +81,5 @@ class Pagerduty {
         return axios.get(`https://api.pagerduty.com/${url}`, {headers});
     }
 }
+
 module.exports = Pagerduty;
