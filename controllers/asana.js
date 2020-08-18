@@ -3,7 +3,7 @@ const router = express.Router();
 const asana = require('asana');
 const {checkToken, respond} = require("../utils/mattermost");
 
-const MM_TOKEN = process.env.PAGER_DUTY_MM_KEY;
+const MM_TOKEN = process.env.ASANA_MM_KEY;
 const asanaPersonalToken = process.env.ASANA_PERSONAL_TOKEN;
 const asanaProjectId = process.env.ASANA_PROJECT_ID;
 const asanaWorkspaceId = process.env.ASANA_WORKSPACE_ID;
