@@ -18,14 +18,14 @@ router.post("/", async function (req, res) {
 
     let message = 'Your request has been submitted';
     try {
-        const {body: {text = ""}} = req;
+        const {body: {user_name = null, text = ""}} = req;
 
         const messageText = (text || '').trim();
         if (!messageText) {
             message = 'Message cannot be blank'
         } else {
             const task = await client.tasks.createTask({
-                name: messageText,
+                name: `${messageText} - ${user_name}`,
                 projects: [asanaProjectId],
                 workspace: asanaWorkspaceId,
                 tags: [asanaTagId]
