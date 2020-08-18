@@ -15,6 +15,7 @@ const firewall = require("./controllers/firewall");
 const rds = require("./controllers/rds");
 const webhook = require("./controllers/webhook");
 const corona = require("./controllers/corona");
+const asana = require("./controllers/asana");
 
 app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
@@ -25,6 +26,7 @@ app.use((req, res, next) => {
     }
     next();
 });
+app.use("/asana", asana);
 app.use("/build", build);
 app.use("/time", time);
 app.use("/chat", chat);
