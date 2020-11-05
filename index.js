@@ -26,14 +26,14 @@ app.use((req, res, next) => {
     }
     next();
 });
-app.use("/asana", asana);
+app.use("/asana", asana.router);
 app.use("/build", build);
 app.use("/time", time);
 app.use("/chat", chat);
 app.use("/emergency", emergency);
 app.use("/firewall", firewall);
 app.use("/rds", rds);
-app.use("/webhook", webhook);
+app.use("/webhook", webhook.router);
 app.use("/corona", corona)
 app.get("/", (req, res) => {
     return res.send("You know what you should do");

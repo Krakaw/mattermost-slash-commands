@@ -24,21 +24,21 @@ router.post("/", async function (req, res) {
         if (!messageText) {
             message = 'Message cannot be blank'
         } else {
-            const task = await client.tasks.createTask({
-                name: `${messageText} - ${user_name}`,
-                projects: [asanaProjectId],
-                workspace: asanaWorkspaceId,
-                tags: [asanaTagId]
-            });
-            await client.sections.addTaskForSection(asanaBoardId, {task: task.gid})
+            await createTask(messageText, user_name);
         }
-
-
     } catch (e) {
         message = 'There was an error submitting your request';
-
     }
     return respond(req, res, message, true);
 
 })
-module.exports = router;
+const createTask = async (messageText, user_name) => {
+    const task = await client.tasks.createTask({
+        name: `${messageText} - ${user_name}`,
+        projects: [asanaProjectId],
+        workspace: asanaWorkspaceId,
+        tags: [asanaTagId]
+    });
+    await client.sections.addTaskForSection(asanaBoardId, {task: task.gid})
+}
+module.exports = {router, createTask};

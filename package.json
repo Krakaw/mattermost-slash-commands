@@ -20,5 +20,8 @@
     "express": "^4.16.4",
     "markdown-table": "^2.0.0",
     "moment-timezone": "^0.5.23"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.6"
   }
 }

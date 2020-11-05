@@ -23,21 +23,26 @@ router.post('/', async function(req,res) {
     if (!checkToken(req, WEBHOOK_MM_KEY)) {
         return res.sendStatus(401);
     }
-    const mm = new Mattermost(WEBHOOK_MM_API_URL, WEBHOOK_MM_TOKEN);
-    const title = processWebhookMessage(req.body.title, req.body.replacements);
-    const body = processWebhookMessage(req.body.body, req.body.replacements);
-    let message = body;
-    if (title) {
-        message = `${title}\n${message}`;
+
+    const {title, body, replacements, channel, noPost} = req.body;
+    const titleText = processWebhookMessage(title,replacements);
+    const bodyText = processWebhookMessage(body, replacements);
+    let message = bodyText;
+    if (titleText) {
+        message = `${titleText}\n${message}`;
     }
-    if (req.body.noPost) {
+    if (noPost) {
         console.log(message)
     } else {
-        mm.create_post(WEBHOOK_MM_TEAM, req.body.channel, message);
+        createPost(channel, message).finally()
     }
 
     return res.sendStatus(200);
 });
 
-module.exports = router;
+const createPost = async (channel, message) => {
+    const mm = new Mattermost(WEBHOOK_MM_API_URL, WEBHOOK_MM_TOKEN);
+    return await mm.create_post(WEBHOOK_MM_TEAM, channel, message);
+}
+module.exports = {router, createPost, processWebhookMessage};
 
