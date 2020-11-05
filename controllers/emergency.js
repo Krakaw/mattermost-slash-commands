@@ -15,20 +15,19 @@ router.post("/", async function(req, res) {
 
     const messageText = (text || '').trim();
 
-    // if (!checkToken(req, MM_TOKEN)) {
-    //     return res.send("Not authorized");
-    // }
+    if (!checkToken(req, MM_TOKEN)) {
+        return res.send("Not authorized");
+    }
     let responseText = '';
     let forcePrivateResponse = true;
     if (messageText !== "") {
         let pdResponse = await pagerDuty.trigger(messageText, messageText);
         let assignees = pdResponse.data.incident.assignments.map(item => item.assignee.summary).join(", ");
-
         if (!EMERGENCY_CHANNEL) {
             responseText = `Pager Duty notification has been sent to ${assignees}!\n`;
             forcePrivateResponse = false;
         } else {
-            createPost(EMERGENCY_CHANNEL, processWebhookMessage(EMERGENCY_MESSAGE, {"%assignees%": assignees, "%user_name%": user_name, "%message%": messageText})).finally()
+            createPost(EMERGENCY_CHANNEL, processWebhookMessage(JSON.parse(`"${EMERGENCY_MESSAGE}"`), { "%assignees%": assignees, "%user_name%": user_name, "%message%": messageText})).finally()
         }
         createTask(`THIS IS AN EMERGENCY: ${messageText}`, user_name).finally();
     } else {
