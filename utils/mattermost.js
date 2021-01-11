@@ -8,7 +8,7 @@ const checkToken = (req, envToken) => {
 
 const respond = (req, res, text, forcePrivateResponse) => {
     const {body: {channel_id}} = req;
-    const responseText = text.trim();
+    const responseText = (text || '').trim();
     if (DEBUG) {
         console.log("Responding", responseText, channel_id);
     }

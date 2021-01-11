@@ -9,6 +9,7 @@ const DEBUG = process.env.DEBUG;
 
 router.post('/', async (req, res) => {
     const {body: {user_name = null, text = "", command = ""}} = req;
+
     const messageText = (text || '').trim().replace(/["'\\&|><]/g,'');
     const messageCommand = command.replace(/^\//, '').replace(/["'\\&|><]/g,'');
 
