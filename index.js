@@ -16,7 +16,7 @@ const rds = require("./controllers/rds");
 const webhook = require("./controllers/webhook");
 const corona = require("./controllers/corona");
 const asana = require("./controllers/asana");
-
+const cli = require("./controllers/cli");
 app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
 
@@ -35,6 +35,7 @@ app.use("/firewall", firewall);
 app.use("/rds", rds);
 app.use("/webhook", webhook.router);
 app.use("/corona", corona)
+app.use("/cli", cli);
 app.get("/", (req, res) => {
     return res.send("You know what you should do");
 });
