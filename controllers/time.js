@@ -9,6 +9,7 @@ const TIMEZONES = {
     "Nashville": "US/Central",
     "Florida": "EST",
     "Ontario": "EST",
+    "Sweden": "Europe/Stockholm",
     "Johannesburg": "Africa/Johannesburg",
     "Ukraine": "Europe/Kiev",
     "Turkey": "Europe/Istanbul"
