@@ -5,12 +5,13 @@ const moment = require("moment-timezone");
 const MM_TOKEN = process.env.TIME_KEY;
 
 const TIMEZONES = {
-    "Johannesburg": "Africa/Johannesburg",
     "San Francisco": "America/Los_Angeles",
     "Nashville": "US/Central",
-    "Florida": "America/New_York",
-    "Serbia": "CET",
-    "Berlin": "Europe/Berlin"
+    "Florida": "EST",
+    "Ontario": "EST",
+    "Johannesburg": "Africa/Johannesburg",
+    "Ukraine": "Europe/Kiev",
+    "Turkey": "Europe/Istanbul"
 };
 
 const SLEEP_TIMES = [[18, 23], [0, 7]];
