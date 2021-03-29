@@ -12,9 +12,9 @@ const asanaTagId = process.env.ASANA_TAG_ID;
 
 const client = asana.Client.create({defaultHeaders: {'Asana-Enable': 'string_ids'}}).useAccessToken(asanaPersonalToken);
 router.post("/", async function (req, res) {
-    if (!checkToken(req, MM_TOKEN)) {
-        return res.send("Not authorized");
-    }
+    // if (!checkToken(req, MM_TOKEN)) {
+    //     return res.send("Not authorized");
+    // }
 
     let message = 'Your request has been submitted';
     try {
@@ -24,9 +24,11 @@ router.post("/", async function (req, res) {
         if (!messageText) {
             message = 'Message cannot be blank'
         } else {
-            await createTask(messageText, user_name);
+          const task =  await createTask(messageText, user_name);
+          message += ' ' + task.permalink_url;
         }
     } catch (e) {
+        console.error(e)
         message = 'There was an error submitting your request';
     }
     return respond(req, res, message, true);
@@ -39,6 +41,7 @@ const createTask = async (messageText, user_name) => {
         workspace: asanaWorkspaceId,
         tags: [asanaTagId]
     });
-    await client.sections.addTaskForSection(asanaBoardId, {task: task.gid})
+    await client.sections.addTaskForSection(asanaBoardId, {task: task.gid});
+    return task;
 }
 module.exports = {router, createTask};
