@@ -12,9 +12,9 @@ const asanaTagId = process.env.ASANA_TAG_ID;
 
 const client = asana.Client.create({defaultHeaders: {'Asana-Enable': 'string_ids'}}).useAccessToken(asanaPersonalToken);
 router.post("/", async function (req, res) {
-    // if (!checkToken(req, MM_TOKEN)) {
-    //     return res.send("Not authorized");
-    // }
+    if (!checkToken(req, MM_TOKEN)) {
+        return res.send("Not authorized");
+    }
 
     let message = 'Your request has been submitted';
     try {
