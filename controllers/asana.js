@@ -5,14 +5,14 @@ const {checkToken, respond} = require("../utils/mattermost");
 
 const asanaPersonalToken = process.env.ASANA_PERSONAL_TOKEN;
 const asanaProjectIds = {};
-process.env.ASANA_PROJECT_ID.split('|').map(s => s.split(':')).forEach(([board, id, mmToken]) => {
-    asanaProjectIds[board] = {id, mmToken};
+process.env.ASANA_PROJECT_ID.split('|').map(s => s.split(':')).forEach(([board, projectId, sectionId, mmToken]) => {
+    asanaProjectIds[board] = { projectId, mmToken, sectionId};
 });
 const asanaWorkspaceId = process.env.ASANA_WORKSPACE_ID;
-const asanaBoardId = process.env.ASANA_BOARD_ID;
 const asanaTagId = process.env.ASANA_TAG_ID;
 
 const client = asana.Client.create({defaultHeaders: {'Asana-Enable': 'string_ids'}}).useAccessToken(asanaPersonalToken);
+
 router.post("/:board", async function (req, res) {
     const board = req.params.board;
     const asanaProject = asanaProjectIds[board];
@@ -28,11 +28,11 @@ router.post("/:board", async function (req, res) {
         if (!messageText) {
             message = 'Message cannot be blank'
         } else {
-            if (!asanaProjectIds[board]) {
+            if (!asanaProject) {
                 throw Error(`${board} does not exist`);
             }
 
-            const task = await createTask(asanaProject.id, messageText, user_name);
+            const task = await createTask(asanaProject, messageText, user_name);
             message += ' ' + task.permalink_url;
         }
     } catch (e) {
@@ -42,14 +42,14 @@ router.post("/:board", async function (req, res) {
     return respond(req, res, message, true);
 
 })
-const createTask = async (asanaProjectId, messageText, user_name) => {
+const createTask = async (asanaProject, messageText, user_name) => {
     const task = await client.tasks.createTask({
         name: `${messageText} - ${user_name}`,
-        projects: [asanaProjectId],
+        projects: [asanaProject.projectId],
         workspace: asanaWorkspaceId,
         tags: [asanaTagId]
     });
-    await client.sections.addTaskForSection(asanaBoardId, {task: task.gid});
+    await client.sections.addTaskForSection(asanaProject.sectionId, {task: task.gid});
     return task;
 }
 module.exports = {router, createTask};
