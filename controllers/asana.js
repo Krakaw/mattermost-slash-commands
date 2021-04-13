@@ -14,7 +14,7 @@ const asanaBoardId = process.env.ASANA_BOARD_ID;
 const asanaTagId = process.env.ASANA_TAG_ID;
 
 const client = asana.Client.create({defaultHeaders: {'Asana-Enable': 'string_ids'}}).useAccessToken(asanaPersonalToken);
-router.post("/:board?", async function (req, res) {
+router.post("/:board", async function (req, res) {
     const board = req.params.board;
     if (!checkToken(req, MM_TOKEN)) {
         return res.send("Not authorized");
