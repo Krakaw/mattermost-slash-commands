@@ -3,11 +3,10 @@ const router = express.Router();
 const asana = require('asana');
 const {checkToken, respond} = require("../utils/mattermost");
 
-const MM_TOKEN = process.env.ASANA_MM_KEY;
 const asanaPersonalToken = process.env.ASANA_PERSONAL_TOKEN;
 const asanaProjectIds = {};
-process.env.ASANA_PROJECT_ID.split('|').map(s => s.split(':')).forEach(([board, id]) => {
-    asanaProjectIds[board] = id;
+process.env.ASANA_PROJECT_ID.split('|').map(s => s.split(':')).forEach(([board, id, mmToken]) => {
+    asanaProjectIds[board] = {id, mmToken};
 });
 const asanaWorkspaceId = process.env.ASANA_WORKSPACE_ID;
 const asanaBoardId = process.env.ASANA_BOARD_ID;
@@ -16,7 +15,8 @@ const asanaTagId = process.env.ASANA_TAG_ID;
 const client = asana.Client.create({defaultHeaders: {'Asana-Enable': 'string_ids'}}).useAccessToken(asanaPersonalToken);
 router.post("/:board", async function (req, res) {
     const board = req.params.board;
-    if (!checkToken(req, MM_TOKEN)) {
+    const asanaProject = asanaProjectIds[board];
+    if (!checkToken(req, asanaProject.mmToken)) {
         return res.send("Not authorized");
     }
 
@@ -31,8 +31,8 @@ router.post("/:board", async function (req, res) {
             if (!asanaProjectIds[board]) {
                 throw Error(`${board} does not exist`);
             }
-            const asanaProjectId = asanaProjectIds[board];
-            const task = await createTask(asanaProjectId, messageText, user_name);
+
+            const task = await createTask(asanaProject.id, messageText, user_name);
             message += ' ' + task.permalink_url;
         }
     } catch (e) {
