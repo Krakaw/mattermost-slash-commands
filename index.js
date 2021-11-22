@@ -17,6 +17,7 @@ const webhook = require("./controllers/webhook");
 const corona = require("./controllers/corona");
 const asana = require("./controllers/asana");
 const cli = require("./controllers/cli");
+const panic = require('./controllers/panic');
 app.use(bodyParser.json()); // for parsing application/json
 app.use(bodyParser.urlencoded({extended: true})); // for parsing application/x-www-form-urlencoded
 
@@ -31,6 +32,7 @@ app.use("/build", build);
 app.use("/time", time);
 app.use("/chat", chat);
 app.use("/emergency", emergency);
+app.use("/panic", panic);
 app.use("/firewall", firewall);
 app.use("/rds", rds);
 app.use("/webhook", webhook.router);

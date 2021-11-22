@@ -3,17 +3,12 @@ const router = express.Router();
 
 const moment = require("moment-timezone");
 const MM_TOKEN = process.env.TIME_KEY;
+const TIMEZONES = {};
+process.env.TIME_ZONES.split(',').forEach(tz => {
+    const [name, zone] = tz.split('|');
+    TIMEZONES[name] = zone;
+})
 
-const TIMEZONES = {
-    "San Francisco": "America/Los_Angeles",
-    "Nashville": "US/Central",
-    "Florida": "EST",
-    "Ontario": "EST",
-    "Sweden": "Europe/Stockholm",
-    "Johannesburg": "Africa/Johannesburg",
-    "Ukraine": "Europe/Kiev",
-    "Turkey": "Europe/Istanbul"
-};
 
 const SLEEP_TIMES = [[18, 23], [0, 7]];
 
