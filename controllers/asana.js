@@ -36,7 +36,7 @@ router.post("/:board", async function (req, res) {
             message += ' ' + task.permalink_url;
         }
     } catch (e) {
-        console.error(e)
+        console.error(JSON.stringify(e))
         message = 'There was an error submitting your request';
     }
     return respond(req, res, message, true);
