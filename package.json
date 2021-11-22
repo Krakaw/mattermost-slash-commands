@@ -19,7 +19,8 @@
     "dotenv": "^7.0.0",
     "express": "^4.16.4",
     "markdown-table": "^2.0.0",
-    "moment-timezone": "^0.5.23"
+    "moment-timezone": "^0.5.23",
+    "opsgenie-sdk": "^0.5.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.6"
