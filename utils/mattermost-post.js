@@ -28,6 +28,7 @@ class Mattermost {
             options.data = data;
         }
         const res = await axios(options);
+
         return res.data;
     }
 
@@ -50,21 +51,30 @@ class Mattermost {
         return await this.api("get", "users");
     }
 
-    async get_channels(teamId) {
+    async get_channels(teamId, page = 0) {
         let id = teamId;
         if (!teamId) {
             const teams = await this.get_teams(true);
             id = teams[0].id;
         }
-        const channels = await this.api("get", `teams/${id}/channels?per_page=250`);
-        this.channelMap = {};
-        channels.forEach(ch => {
-            this.channelMap[ch.name] = {
-                id: ch.id,
-                name: ch.name,
-                displayName: ch.display_name
-            };
-        });
+        try {
+            const channels = await this.api("get", `teams/${id}/channels?per_page=250&page=${page}`);
+
+            this.channelMap = {};
+            channels.forEach(ch => {
+                this.channelMap[ch.name] = {
+                    id: ch.id,
+                    name: ch.name,
+                    displayName: ch.display_name
+                };
+            });
+            if (channels.length) {
+                await this.get_channels(teamId, page + 1);
+            }
+
+
+        }catch{}
+
     }
 
     /**
@@ -80,7 +90,8 @@ class Mattermost {
         if (!this.channelMap || reloadChannels) {
             await this.get_channels(team_id.id);
         }
-        const ch = this.channelMap[channel];
+
+        const ch = this.channelMap[channel] || {id: channel};
         if (!ch) {
             throw new Error(`Unknown channel: ${channel}`);
         }
