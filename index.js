@@ -31,7 +31,7 @@ app.use("/asana", asana.router);
 app.use("/build", build);
 app.use("/time", time);
 app.use("/chat", chat);
-app.use("/emergency", emergency);
+app.use("/emergency", panic);
 app.use("/panic", panic);
 app.use("/firewall", firewall);
 app.use("/rds", rds);
