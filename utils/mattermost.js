@@ -10,6 +10,15 @@ const checkToken = (req, envToken) => {
     return (compareToken && compareToken === token);
 };
 
+const checkChannel = (req, channel) => {
+    if (BYPASS_TOKEN === 'bypass') {
+        return true;
+    }
+    const compareToken = (channel || '').trim();
+    const {body: {channel_name = null}} = req;
+    return (compareToken && compareToken === channel_name);
+}
+
 const respond = (req, res, text, forcePrivateResponse) => {
     const {body: {channel_id}} = req;
     const responseText = (text || '').trim();
@@ -26,5 +35,6 @@ const respond = (req, res, text, forcePrivateResponse) => {
 
 module.exports = {
     checkToken,
+    checkChannel,
     respond
 };
