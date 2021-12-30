@@ -16,7 +16,8 @@ router.post("/", async function(req, res) {
     const releasr = new Releasr();
     const {body: {text = "", user_name = null}} = req;
     const messageText = (text || '').trim();
-    const [command, env, version, ...note] = messageText.replace(/\s{2,}/g, ' ').split(' ')
+    const [command, env, version] = messageText.split("\n").shift().split(' ').filter(p => p.trim() !== '');
+    const note = messageText.replace(command, '').replace(env, '').replace(version, '').trim();
 
     let responseText = '';
     switch(command.toLowerCase()) {
@@ -25,7 +26,7 @@ router.post("/", async function(req, res) {
                 responseText = `Invalid command: add env version note [add dev 1.0.0 Release Note]`;
                 break;
             }
-            const data = await releasr.add(env, version, note.join(' '));
+            const data = await releasr.add(env, version, note);
             if (data && data.length) {
                 responseText = `Note${data.length > 1? 's': ''} added for version: ${version} on ${data.map(n => n.environment).join(', ')}\nUse the "list" command to view notes`
             } else {
