@@ -19,13 +19,13 @@ const checkChannel = (req, channel) => {
     return (compareToken && compareToken === channel_name);
 }
 
-const respond = (req, res, text, forcePrivateResponse) => {
+const respond = (req, res, text, forcePrivateResponse, extra_responses = []) => {
     const {body: {channel_id}} = req;
     const responseText = (text || '').trim();
     if (DEBUG) {
         console.log("Responding", responseText, channel_id);
     }
-    let response = {text: responseText};
+    let response = {text: responseText , extra_responses};
     if (!forcePrivateResponse && channel_id) {
         response.response_type = "in_channel";
         response.channel_id = channel_id;

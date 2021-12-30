@@ -20,6 +20,7 @@ router.post("/", async function(req, res) {
     const note = messageText.replace(command, '').replace(env, '').replace(version, '').trim();
 
     let responseText = '';
+    let extra_responses = [];
     switch(command.toLowerCase()) {
         case 'add': {
             if (!env || !version) {
@@ -41,21 +42,16 @@ router.post("/", async function(req, res) {
         }
         case 'list': {
             const data = await releasr.list(env, version)
-            responseText = data.map(note => {
-                return `## ${note.version}\n${note.note}`
-            }).join("\n");
+            responseText = `## Releasr List for ${env} @ ${version|| '?'}`;
+            extra_responses = data.map(note => {
+                return `### ${note.environment}@${note.version}\n${note.note}`
+            })
             break;
         }
         default:
             responseText = 'Invalid command: expected [add|list|complete]'
     }
 
-
-    // List notes for env + version
-    // Add note for env + version
-    // Complete notes for env + version
-
-
-    return respond(req, res, responseText, false);
+    return respond(req, res, responseText, false, extra_responses);
 });
 module.exports = router;

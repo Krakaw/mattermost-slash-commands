@@ -27,11 +27,13 @@ class Releasr {
     }
 
     async list(environment, version) {
+        const params = {environment}
+        if (version) {
+            params.version = version;
+        }
+        console.log(params)
         const {data} = await axios.get(this.url + '/notes', {
-            params: {
-                environment,
-                version
-            },
+            params,
             headers: {
                 "Content-Type": "application/json",
             }
