@@ -20,7 +20,6 @@ class Releasr {
             });
             return data;
         } catch (e) {
-            console.error(e)
             return []
         }
 
