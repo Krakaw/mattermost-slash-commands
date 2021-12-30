@@ -22,6 +22,10 @@ router.post("/", async function(req, res) {
     let responseText = '';
     let extra_responses = [];
     switch(command.toLowerCase()) {
+        case 'envs': {
+
+            break;
+        }
         case 'add': {
             if (!env || !version) {
                 responseText = `Invalid command: add env version note [add dev 1.0.0 Release Note]`;

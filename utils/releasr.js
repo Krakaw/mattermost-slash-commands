@@ -31,7 +31,6 @@ class Releasr {
         if (version) {
             params.version = version;
         }
-        console.log(params)
         const {data} = await axios.get(this.url + '/notes', {
             params,
             headers: {
@@ -52,6 +51,10 @@ class Releasr {
             }
         });
         return data;
+    }
+
+    async list_envs() {
+
     }
 }
 
