@@ -22,8 +22,6 @@ class Releasr {
         } catch (e) {
             return []
         }
-
-
     }
 
     async list(environment, version) {
@@ -54,7 +52,12 @@ class Releasr {
     }
 
     async list_envs() {
-
+        const {data} = await axios.get(this.url + '/environments', {
+            headers: {
+                "Content-Type": "application/json",
+            }
+        });
+        return data;
     }
 }
 

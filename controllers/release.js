@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {checkToken, checkChannel, respond} = require("../utils/mattermost");
+const intToSemver = require('../utils/int-to-semver');
 const Releasr = require('../utils/releasr');
 const MM_TOKEN = process.env.RELEASE_MM_KEY;
 const MM_CHANNEL = process.env.RELEASE_MM_CHANNEL;
@@ -23,6 +24,11 @@ router.post("/", async function(req, res) {
     let extra_responses = [];
     switch(command.toLowerCase()) {
         case 'envs': {
+            const data = await releasr.list_envs();
+            responseText = data.map(e => {
+                return `${e.name}@${intToSemver(e.last_deployed_version)}`
+            }).join("\n");
+
 
             break;
         }
@@ -46,7 +52,7 @@ router.post("/", async function(req, res) {
         }
         case 'list': {
             const data = await releasr.list(env, version)
-            responseText = `## Releasr List for ${env} @ ${version|| '?'}`;
+            responseText = `## Releasr List for ${env} @ ${version ? version : '*'}`;
             extra_responses = data.map(note => {
                 return `### ${note.environment}@${note.version}\n${note.note}`
             })
