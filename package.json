@@ -13,7 +13,7 @@
   "dependencies": {
     "asana": "^0.18.4",
     "aws-sdk": "^2.814.0",
-    "axios": "^0.21.2",
+    "axios": "^0.30.3",
     "body-parser": "^1.20.1",
     "cheerio": "^1.0.0-rc.3",
     "dotenv": "^7.0.0",
